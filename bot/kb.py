@@ -6,7 +6,7 @@ import urllib.parse
 
 menu = [
     [InlineKeyboardButton(text="Я хочу продать недвижимость", callback_data="sell_real_estate"),
-     InlineKeyboardButton(text="Я хочу купить недвижимость", callback_data="sell_real_estate")],
+     InlineKeyboardButton(text="Я хочу купить недвижимость", callback_data="buy_real_estate")],
     [InlineKeyboardButton(text="Ипотека(все операции бесплатно)", callback_data="sell_real_estate"),
      InlineKeyboardButton(text="Запросить консультацию по телефону", callback_data="sell_real_estate")],
     [InlineKeyboardButton(text="Задать свой вопрос", callback_data="sell_real_estate"),
@@ -25,9 +25,9 @@ sell_real_estate = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 type_of_object = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Квартира", callback_data="type_of_object,Квартира"),
-     InlineKeyboardButton(text="Строится", callback_data="type_of_object,Строится")],
-    [InlineKeyboardButton(text="Земельный участок", callback_data="type_of_object,Земельный участок"),
-     InlineKeyboardButton(text="Загородный дом", callback_data="type_of_object,Загородный дом")],
-    [InlineKeyboardButton(text="Коммерческая недвижимость", callback_data="type_of_object,Коммерческая недвижимость")],
+    [InlineKeyboardButton(text="Квартира", callback_data="type_of_object_sell,Квартира"),
+     InlineKeyboardButton(text="Строится", callback_data="type_of_object_sell,Строится")],
+    [InlineKeyboardButton(text="Земельный участок", callback_data="type_of_object_sell,Земельный_участок"),
+     InlineKeyboardButton(text="Загородный дом", callback_data="type_of_object_sell,Загородный_дом")],
+    [InlineKeyboardButton(text="Коммерческая недвижимость", callback_data="type_of_object_sell,Комм")],
 ])
