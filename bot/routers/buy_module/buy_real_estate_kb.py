@@ -23,8 +23,7 @@ calculation_format_buy_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Ипотека", callback_data="mortgage,Ипотека"),
      InlineKeyboardButton(text="Собственные средства", callback_data="calculation_format_buy_kb,Собственныесредства")],
 ])
-# todo добавить переход в раздел ипотеки
 mortgage_buy_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Уже имеется одобрение", callback_data="calculation_format_buy_kb,True"),
-     InlineKeyboardButton(text="Ипотека требует одобрения", callback_data="asd")],
+     InlineKeyboardButton(text="Ипотека требует одобрения", callback_data="mortgage_true")],
 ])
