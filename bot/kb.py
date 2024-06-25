@@ -8,8 +8,8 @@ menu = [
     [InlineKeyboardButton(text="Я хочу продать недвижимость", callback_data="sell_real_estate")],
      [InlineKeyboardButton(text="Я хочу купить недвижимость", callback_data="buy_real_estate")],
     [InlineKeyboardButton(text="Ипотека(все операции бесплатно)", callback_data="mortgage_true")],
-     [InlineKeyboardButton(text="Запросить консультацию по телефону", callback_data="sell_real_estate")],
-    [InlineKeyboardButton(text="Задать свой вопрос", callback_data="sell_real_estate")],
+     [InlineKeyboardButton(text="Запросить консультацию по телефону", callback_data="Request_a_consultation_by_phone")],
+    [InlineKeyboardButton(text="Задать свой вопрос", callback_data="Ask_your_question")],
      [InlineKeyboardButton(text="Получить лучшие предложения за неделю", callback_data="sell_real_estate")],
 ]
 menu = InlineKeyboardMarkup(inline_keyboard=menu)
