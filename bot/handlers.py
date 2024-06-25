@@ -56,6 +56,30 @@ async def menu(msg: Message):
     await msg.message.answer(text.menu, reply_markup=kb.menu)
 
 
+@router.callback_query(F.data == "Request_a_consultation_by_phone")
+async def menu(msg: Message):
+    await msg.message.delete()
+    await msg.message.answer("сделать пересылку данных юзера риелтору")
+
+
+class Question(StatesGroup):
+    question = State()
+
+
+@router.message(Question.question)
+async def menu(msg: Message, state: FSMContext):
+    # await msg.delete()
+    await msg.answer("сделать пересылку данных юзера и вопроса риелтору"
+                     f'\nВаш вопрос: {msg.text}')
+
+
+@router.callback_query(F.data == "Ask_your_question")
+async def menu(msg: Message, state: FSMContext):
+    await msg.message.delete()
+    await state.set_state(Question.question)
+    await msg.message.answer("Введите свой вопрос:")
+
+
 # default way of displaying a selector to user - date set for today
 @router.callback_query(F.data == "sell_real_estate")
 async def sell_real_estate(callback_query: CallbackQuery, state: FSMContext):
@@ -137,8 +161,8 @@ async def type_of_object(message: types.Message, state: FSMContext):
     await message.answer(
         f"В ближайшее время Вам будет направлена примерная стоимость вашей недвижимости\n"
         f"Ваши данные: {user_data.items()}"
+        f"\nсделать пересылку данных юзера риелтору"
     )
-
 
 # @router.message()
 # async def unhandled_message(message: types.Message):

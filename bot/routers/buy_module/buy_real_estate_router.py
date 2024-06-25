@@ -213,4 +213,5 @@ async def calculation_format_buy(callback_query: CallbackQuery, state: FSMContex
         f"или потребуются изменения выбранных условий вы можете\n"
         f"обратиться в чат."
         f"Ваши данные: {user_data.items()}"
+        f"\nсделать пересылку данных юзера риелтору"
     )
