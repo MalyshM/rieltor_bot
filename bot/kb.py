@@ -6,11 +6,11 @@ import urllib.parse
 
 menu = [
     [InlineKeyboardButton(text="Я хочу продать недвижимость", callback_data="sell_real_estate")],
-     [InlineKeyboardButton(text="Я хочу купить недвижимость", callback_data="buy_real_estate")],
+    [InlineKeyboardButton(text="Я хочу купить недвижимость", callback_data="buy_real_estate")],
     [InlineKeyboardButton(text="Ипотека(все операции бесплатно)", callback_data="mortgage_true")],
-     [InlineKeyboardButton(text="Запросить консультацию по телефону", callback_data="Request_a_consultation_by_phone")],
+    [InlineKeyboardButton(text="Запросить консультацию по телефону", callback_data="Request_a_consultation_by_phone")],
     [InlineKeyboardButton(text="Задать свой вопрос", callback_data="Ask_your_question")],
-     [InlineKeyboardButton(text="Получить лучшие предложения за неделю", callback_data="sell_real_estate")],
+    [InlineKeyboardButton(text="Получить лучшие предложения за неделю", callback_data="deals_of_the_week")],
 ]
 menu = InlineKeyboardMarkup(inline_keyboard=menu)
 exit_kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="◀️ Выйти в меню")]], resize_keyboard=True)
@@ -19,9 +19,9 @@ iexit_kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀
 sell_real_estate = InlineKeyboardMarkup(inline_keyboard=[
     [
         InlineKeyboardButton(text="Указать тип объекта", callback_data="sell_real_estate_true,False")],
-        [InlineKeyboardButton(text="Получить дополнительно приблизительную стоимость вашего объекта",
-                             callback_data="sell_real_estate_true,True")
-    ]
+    [InlineKeyboardButton(text="Получить дополнительно приблизительную стоимость вашего объекта",
+                          callback_data="sell_real_estate_true,True")
+     ]
 ])
 
 type_of_object = InlineKeyboardMarkup(inline_keyboard=[
@@ -30,4 +30,16 @@ type_of_object = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Земельный участок", callback_data="type_of_object_sell,Земельный_участок"),
      InlineKeyboardButton(text="Загородный дом", callback_data="type_of_object_sell,Загородный_дом")],
     [InlineKeyboardButton(text="Коммерческая недвижимость", callback_data="type_of_object_sell,Комм")],
+])
+
+Get_the_best_deals_of_the_week_kb_1 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="Загородная", callback_data="best_deals_of_the_week,1")],
+    [InlineKeyboardButton(text="Вторичка", callback_data="best_deals_of_the_week,2")],
+    [InlineKeyboardButton(text="Новостройка", callback_data="best_deals_of_the_week,3")],
+])
+
+Get_the_best_deals_of_the_week_kb_2 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text="Нов. без ПВ", callback_data="best_new_building_deals_of_the_week,1")],
+    [InlineKeyboardButton(text="Самые дешевые", callback_data="best_new_building_deals_of_the_week,2")],
+    [InlineKeyboardButton(text="Акции и траншевая ипотека", callback_data="best_new_building_deals_of_the_week,3")],
 ])
