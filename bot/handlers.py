@@ -80,6 +80,52 @@ async def menu(msg: Message, state: FSMContext):
     await msg.message.answer("Введите свой вопрос:")
 
 
+@router.callback_query(F.data == "deals_of_the_week")
+async def deals_of_the_week(msg: Message, state: FSMContext):
+    await msg.message.delete()
+    await msg.message.answer(
+        f"Выберите интересующую вас категорию: ",
+        reply_markup=kb.Get_the_best_deals_of_the_week_kb_1
+    )
+
+
+@router.callback_query(F.data.contains("best_deals_of_the_week"))
+async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.message.delete()
+    data = callback_query.data.split(',')
+    if data[1] == '1':
+        await callback_query.message.answer(
+            f"*высылать ссылку на подборку*: "
+        )
+    elif data[1] == '2':
+        await callback_query.message.answer(
+            f"*высылать ссылку на подборку*: "
+        )
+    else:
+        await callback_query.message.answer(
+            f"Выберите интересующую вас категорию: ",
+            reply_markup=kb.Get_the_best_deals_of_the_week_kb_2
+        )
+
+
+@router.callback_query(F.data.contains("best_new_building_deals_of_the_week"))
+async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.message.delete()
+    data = callback_query.data.split(',')
+    if data[1] == '1':
+        await callback_query.message.answer(
+            f"*высылать ссылку на подборку*: "
+        )
+    elif data[1] == '2':
+        await callback_query.message.answer(
+            f"*высылать ссылку на подборку*: "
+        )
+    else:
+        await callback_query.message.answer(
+            f"*высылать ссылку на подборку*: "
+        )
+
+
 # default way of displaying a selector to user - date set for today
 @router.callback_query(F.data == "sell_real_estate")
 async def sell_real_estate(callback_query: CallbackQuery, state: FSMContext):
@@ -126,36 +172,35 @@ async def type_of_object(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.message.delete()
     user_data = await state.get_data()
     print(user_data)
-    if user_data['IS_TRUE'] == "True":
-        await callback_query.message.answer(
-            f"Введите данные о вашем объекте в формате\n"
-            f"Адрес недвижимости,Площадь объекта,кол-во комнат\n"
-            f"Пример: г. Москва ул. Автомоторная д 5 кв 13,54,3\n"
-            f"Где г. Москва ул. Автомоторная д 5 кв 13 - адрес, "
-            f"54 - площадь объекта в кв метрах, 3 - количество комнат: "
-        )
-    else:
-        await callback_query.message.answer(
-            f"Введите данные о вашем объекте в формате\n"
-            f"Адрес недвижимости - адрес\n"
-            f"Пример: Адрес недвижимости - г. Москва ул. Автомоторная д 5 кв 13"
-        )
-
-
-@router.message(F.text.regexp(r'^.*?,\d+,\d+$'))
-@router.message(F.text.regexp(r'Адрес недвижимости - '))
-async def type_of_object(message: types.Message, state: FSMContext):
     await state.set_state(SellPattern.ADDRESS)
-    await state.set_state(SellPattern.SQUARE)
-    await state.set_state(SellPattern.NUMBER_OF_ROOMS)
-    if 'Адрес недвижимости - ' in message.text:
-        data = message.text.replace('Адрес недвижимости - ', '')
-        await state.update_data(ADDRESS=data)
+    await callback_query.message.answer('Введите адрес объекта. Пример:\nг. Москва ул. Автомоторная д 5 кв 13')
+
+
+@router.message(SellPattern.ADDRESS)
+async def get_birth_date(message: types.Message, state: FSMContext):
+    await state.update_data(address=message.text)
+    user_data = await state.get_data()
+    if user_data['IS_TRUE'] != "True":
+        await type_of_object_final(message, state)
     else:
-        data = message.text.split(',')
-        await state.update_data(ADDRESS=data[0])
-        await state.update_data(SQUARE=data[1])
-        await state.update_data(NUMBER_OF_ROOMS=data[2])
+        await state.set_state(SellPattern.SQUARE)
+        # await message.delete()
+        await message.answer("Введите площадь объекта в квадратных метрах. Пример:\n50")
+
+
+@router.message(SellPattern.SQUARE)
+async def get_birth_date(message: types.Message, state: FSMContext):
+    await state.update_data(square=message.text)
+    await state.set_state(SellPattern.NUMBER_OF_ROOMS)
+    # await message.delete()
+    await message.answer("Введите количество комнат. Пример:\n3")
+
+
+@router.message(SellPattern.NUMBER_OF_ROOMS)
+async def type_of_object_final(message: types.Message, state: FSMContext):
+    user_data = await state.get_data()
+    if user_data['IS_TRUE'] == "True":
+        await state.update_data(number_of_rooms=message.text)
     user_data = await state.get_data()
     await state.clear()
     await message.answer(

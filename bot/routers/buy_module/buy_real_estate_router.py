@@ -54,63 +54,27 @@ async def sell_real_estate(callback_query: CallbackQuery, state: FSMContext):
     )
 
 
+class BuyPattern(StatesGroup):
+    cost_range = State()
+    number_of_rooms = State()
+    square = State()
+    house_square = State()
+    land_square = State()
+    location = State()
+
+
 @buy_real_estate_router.callback_query(F.data.contains("type_of_object_buy"))
 @buy_real_estate_router.callback_query(F.data.contains("comm"))
 @buy_real_estate_router.callback_query(F.data.contains("suburban"))
 async def sell_real_estate_true(callback_query: CallbackQuery, state: FSMContext):
     data = callback_query.data.split(',')
-    if data[0] =='type_of_object_buy':
+    if data[0] == 'type_of_object_buy':
         await state.update_data(type_of_object_buy=callback_query.data.split(',')[1])
-        await callback_query.message.delete()
-        await callback_query.message.answer(
-            f"Введите данные о вашем объекте в формате\n"
-            f"предполагаемая стоимость,кол-во комнат,площадь,локация (район)\n"
-            f"Пример: 1000000-4000000,2,60,Замоскворечье\n"
-            f"Где 1000000-4000000 - предполагаемая стоимость(обязательно указывать диапазон,\n"
-            f"2 - кол-во комнат, 60 - площадь, Замоскворечье - локация (район):",
-        )
-    elif data[0] == 'comm' and data[1] != 'Земельный участок':
-        await state.update_data(type_of_object_buy_detail=callback_query.data.split(',')[1])
-        await callback_query.message.delete()
-        await callback_query.message.answer(
-            f"Введите данные о вашем объекте в формате\n"
-            f"предполагаемая стоимость,площадь,локация (район, тракт, населенный пункт)\n"
-            f"Пример: 1000000-4000000,60-120,Замоскворечье\n"
-            f"Где 1000000-4000000 - предполагаемая стоимость(обязательно указывать диапазон),\n"
-            f"60-120 - площадь(обязателен диапазон), Замоскворечье - локация (район, тракт, населенный пункт):",
-        )
-    elif data[0] == 'comm' and data[1] == 'Земельный участок':
-        await state.update_data(type_of_object_buy_detail=callback_query.data.split(',')[1])
-        await callback_query.message.delete()
-        await callback_query.message.answer(
-            f"Введите данные о вашем объекте в формате\n"
-            f"предполагаемая стоимость,площадь,локация (район, тракт, населенный пункт)\n"
-            f"Пример: 1000000-4000000,60-120,Замоскворечье\n"
-            f"Где 1000000-4000000 - предполагаемая стоимость(обязательно указывать диапазон),\n"
-            f"60-120 - площадь(обязателен диапазон), Замоскворечье - локация (район, тракт, населенный пункт):",
-        )
-    elif data[0] == 'suburban' and data[1] != 'Земельный участок':
-        await state.update_data(type_of_object_buy_detail=callback_query.data.split(',')[1])
-        await callback_query.message.delete()
-        await callback_query.message.answer(
-            f"Введите данные о вашем объекте в формате\n"
-            f"предполагаемая стоимость,количество комнат,площадь дома,\n"
-            f"площадь земельного участка(0т-до),локация (район, тракт, населенный пункт)\n"
-            f"Пример: 1000000-4000000,5,120,1000-2000,Замоскворечье\n"
-            f"Где 1000000-4000000 - предполагаемая стоимость(обязательно указывать диапазон),\n"
-            f"5 - количество комнат, 120 - площадь дома, 1000-2000 - площадь земельного участка(обязателен диапазон),\n"
-            f"Замоскворечье - локация (район, тракт, населенный пункт):",
-        )
     else:
         await state.update_data(type_of_object_buy_detail=callback_query.data.split(',')[1])
-        await callback_query.message.delete()
-        await callback_query.message.answer(
-            f"Введите данные о вашем объекте в формате\n"
-            f"предполагаемая стоимость,площадь,локация (район, тракт, населенный пункт)\n"
-            f"Пример: 1000000-4000000,60-120,Замоскворечье\n"
-            f"Где 1000000-4000000 - предполагаемая стоимость(обязательно указывать диапазон),\n"
-            f"60-120 - площадь(обязателен диапазон), Замоскворечье - локация (район, тракт, населенный пункт):",
-        )
+    await callback_query.message.delete()
+    await state.set_state(BuyPattern.cost_range)
+    await callback_query.message.answer('Введите предполагаемую вилку стоимости.\nПример: 1000000-3000000')
 
 
 @buy_real_estate_router.callback_query(F.data.contains("type_of_object_detail_buy"))
@@ -132,54 +96,59 @@ async def sell_real_estate_true(callback_query: CallbackQuery, state: FSMContext
         )
 
 
-# @router.callback_query(F.data.contains("type_of_object"))
-# async def type_of_object(callback_query: CallbackQuery, state: FSMContext):
-#     await state.set_state(SellPattern.TYPE_OF_OBJECT)
-#     await state.update_data(TYPE_OF_OBJECT=callback_query.data.split(',')[1])
-#     # await state.set_state(UserData.GENDER.state.split(',')[0])
-#     await callback_query.message.delete()
-#     user_data = await state.get_data()
-#     print(user_data)
-#     if user_data['IS_TRUE'] == "True":
-#         await callback_query.message.answer(
-#             f"Введите данные о вашем объекте в формате\n"
-#             f"Адрес недвижимости,Площадь объекта,кол-во комнат\n"
-#             f"Пример: г. Москва ул. Автомоторная д 5 кв 13,54,3\n"
-#             f"Где г. Москва ул. Автомоторная д 5 кв 13 - адрес, "
-#             f"54 - площадь объекта в кв метрах, 3 - количество комнат: "
-#         )
-#     else:
-#         await callback_query.message.answer(
-#             f"Введите данные о вашем объекте в формате\n"
-#             f"Адрес недвижимости - адрес\n"
-#             f"Пример: Адрес недвижимости - г. Москва ул. Автомоторная д 5 кв 13"
-#         )
-
-
-@buy_real_estate_router.message(F.text.regexp(r'.*?,.*?,.*?,.*'))
-@buy_real_estate_router.message(F.text.regexp(r'.*?,.*?,.*?,.*?,.*'))
-@buy_real_estate_router.message(F.text.regexp(r'^(\d+)-(\d+),(\d+)-(\d+),(.+)$'))
-async def type_of_object(message: types.Message, state: FSMContext):
-    print(message.text)
-    data = message.text.split(',')
-    if len(data) == 4:
-        await state.update_data(price=data[0])
-        await state.update_data(number_of_rooms=data[1])
-        await state.update_data(square=data[2])
-        await state.update_data(location=data[3])
-    elif len(data) == 3:
-        await state.update_data(price=data[0])
-        await state.update_data(square=data[1])
-        await state.update_data(location=data[2])
-    else:
-        await state.update_data(price=data[0])
-        await state.update_data(number_of_rooms=data[1])
-        await state.update_data(square_house=data[2])
-        await state.update_data(land_plot_square=data[3])
-        await state.update_data(location=data[4])
+@buy_real_estate_router.message(BuyPattern.cost_range)
+async def get_birth_date(message: types.Message, state: FSMContext):
+    await state.update_data(cost_range=message.text)
     user_data = await state.get_data()
-    print(user_data.items())
+    if 'type_of_object_buy_detail' in user_data.keys():
+        print(user_data)
+        print(user_data.values())
+        if 'Загородная' in user_data.values() or 'Земельный участок' in user_data.values():
+            await state.set_state(BuyPattern.land_square)
+            await message.answer("Введите вилку площади желаемого участка в квадратных метрах. Пример:\n1000-2000")
+        else:
+            await state.set_state(BuyPattern.square)
+            await message.answer("Введите вилку площади желаемого объекта в квадратных метрах. Пример:\n1000-2000")
+    else:
+        await state.set_state(BuyPattern.number_of_rooms)
+        await message.answer("Введите количество комнат. Пример:\n5")
 
+    # await message.delete()
+
+
+@buy_real_estate_router.message(BuyPattern.land_square)
+async def get_birth_date(message: types.Message, state: FSMContext):
+    await state.update_data(land_square=message.text)
+    user_data = await state.get_data()
+    if 'Земельный участок' in user_data.values():
+        await state.set_state(BuyPattern.location)
+        await message.answer("Введите желаемый район/тракт/населенный пункт. Пример:\nТюмень район Обороны")
+    else:
+        await state.set_state(BuyPattern.number_of_rooms)
+        await message.answer("Введите количество комнат. Пример:\n5")
+
+
+@buy_real_estate_router.message(BuyPattern.number_of_rooms)
+async def get_birth_date(message: types.Message, state: FSMContext):
+    await state.update_data(number_of_rooms=message.text)
+    user_data = await state.get_data()
+    await state.set_state(BuyPattern.square)
+    if 'type_of_object_buy_detail' in user_data.keys():
+        await message.answer("Введите площадь дома. Пример:\n200")
+    else:
+        await message.answer("Введите площадь квартиры. Пример:\n50")
+
+
+@buy_real_estate_router.message(BuyPattern.square)
+async def get_birth_date(message: types.Message, state: FSMContext):
+    await state.update_data(square=message.text)
+    await state.set_state(BuyPattern.location)
+    await message.answer("Введите желаемый район/тракт/населенный пункт. Пример:\nТюмень район Обороны")
+
+
+@buy_real_estate_router.message(BuyPattern.location)
+async def get_birth_date(message: types.Message, state: FSMContext):
+    await state.update_data(location=message.text)
     await message.answer(
         f"Формат расчета: \n",
         reply_markup=calculation_format_buy_kb
