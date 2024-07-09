@@ -36,14 +36,14 @@ DROP TABLE IF EXISTS users_questions CASCADE;
 DROP TABLE IF EXISTS users_conlultation CASCADE;
 
 CREATE TABLE admins (
-  id                 BIGSERIAL,
+  tg_id               BIGINT       NOT NULL,
   name               VARCHAR   NOT NULL,
-  tg_id               INT       NOT NULL,
   link               VARCHAR   NOT NULL,
+  email              VARCHAR   not null,
   username           VARCHAR   NOT NULL,
   date_of_add        TIMESTAMP NOT NULL,
   date_of_update     TIMESTAMP,
-  PRIMARY KEY (id)
+  PRIMARY KEY (tg_id)
 );
 
 CREATE TABLE selection (
@@ -52,7 +52,7 @@ CREATE TABLE selection (
   link               VARCHAR   NOT NULL,
   date_of_add        TIMESTAMP NOT NULL,
   date_of_update     TIMESTAMP,
-  admin_id           BIGINT    NOT NULL REFERENCES admins ON DELETE CASCADE,
+  admin_id           BIGINT       NOT NULL REFERENCES admins ON DELETE CASCADE,
   PRIMARY KEY (id)
 );
 
@@ -71,8 +71,8 @@ CREATE TABLE users (
   children           VARCHAR,
   date_of_add        TIMESTAMP NOT NULL,
   date_of_update     TIMESTAMP,
-  admin_id           BIGINT     NOT NULL REFERENCES admins ON DELETE CASCADE,
-  PRIMARY KEY (id)
+  admin_id           BIGINT        NOT NULL REFERENCES admins ON DELETE CASCADE,
+  PRIMARY KEY (tg_id)
 );
 
 CREATE TABLE buy_request (
@@ -127,6 +127,29 @@ CREATE TABLE users_conlultation (
   date_of_add         TIMESTAMP NOT NULL,
   user_id             BIGINT    NOT NULL REFERENCES users ON DELETE CASCADE,
   PRIMARY KEY (id)
+);
+
+INSERT INTO admins (tg_id, name, link, email, username, date_of_add, date_of_update)
+VALUES (
+  981942668,
+  'Аянами Рей',
+  'tg://user?id=981942668',
+  'asd',
+  '@asd',
+  '2023-06-01 10:30:00',
+  '2023-06-15 15:45:00'
+);
+
+
+INSERT INTO admins (tg_id, name, link, email, username, date_of_add, date_of_update)
+VALUES (
+  666,
+  '666',
+  '666',
+  'boss.igroteka@mail.ru',
+  '@666',
+  '2023-06-01 10:30:00',
+  '2023-06-15 15:45:00'
 );
     '''
     cursor.execute(sql1)
