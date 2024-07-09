@@ -1,4 +1,5 @@
 import os
+import re
 
 import aiohttp
 from aiogram import F, Router, types
@@ -9,7 +10,11 @@ import kb
 import text
 from aiogram.fsm.state import State, StatesGroup
 
-from user_funcs import add_user
+from admin_crud import get_admin, update_admin
+from models import connect_db
+from selection_crud import create_selection, update_selection, get_all_selections, get_all_selections_by_admin
+from send_mail import send_email
+from user_funcs import create_user, get_user, update_user
 
 # from requests import add_user, check_resp
 
@@ -32,28 +37,138 @@ class UserData(StatesGroup):
     DAY = State()
     HHMM = State()
     PLACE = State()
+    admin_id = State()
+    email = State()
+    deal_link = State()
 
 
 @router.message(Command("start"))
 async def start_handler(msg: Message):
+    await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.type_of_user_kb)
+
+
+@router.message(Command("menu"))
+@router.callback_query(F.data == "menu")
+@router.message(UserData.admin_id)
+async def menu(msg: Message, state: FSMContext):
     try:
-        resp = await add_user(msg.from_user.id)
+        if isinstance(int(msg.text), int):
+            print(msg.text)
+            async with connect_db() as session:
+                res = await update_user(session, msg.from_user.id, admin_id=int(msg.text))
+                print(res.tg_id)
+                print(res.admin_id)
+    except:
+        pass
+    try:
+        data = {'name': msg.from_user.full_name, 'id': msg.from_user.id, 'url': msg.from_user.url}
+        try:
+            data['username'] = '@' + msg.from_user.username
+        except:
+            data['username'] = 'No username'
+        async with connect_db() as session:
+            resp = await create_user(session, data)
         if isinstance(resp, str):
             raise resp
     except Exception as e:
         print(e)
         pass
-    await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.menu)
+    async with connect_db() as session:
+        resp = await get_user(session, msg.from_user.id)
+        print(resp.tg_id)
+        print(resp.admin_id)
+        if resp.admin_id == 981942668:
+            await state.set_state(UserData.admin_id)
+            try:
+                await msg.message.delete()
+                await msg.message.answer("Введите код вашего риелтора для просмотра")
+            except:
+                await msg.delete()
+                await msg.answer("Введите код вашего риелтора для просмотра")
+        else:
+            await state.update_data(name=msg.from_user.full_name)
+            await state.update_data(id=msg.from_user.id)
+            await state.update_data(url=msg.from_user.url)
+            try:
+                await state.update_data(username='@' + msg.from_user.username)
+            except:
+                await state.update_data(username='No username')
+            try:
+                await msg.message.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
+            except:
+                await msg.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
 
 
-@router.message(F.text == "Меню")
-@router.message(F.text == "Выйти в меню")
-@router.message(F.text == "◀️ Выйти в меню")
-@router.callback_query(F.data == "menu")
-@router.callback_query(F.data == "restart")
-async def menu(msg: Message):
-    await msg.message.delete()
-    await msg.message.answer(text.menu, reply_markup=kb.menu)
+@router.message(Command("admin"))
+@router.callback_query(F.data == "admin")
+@router.message(UserData.email)
+async def admin(msg: Message, state: FSMContext):
+    await state.update_data(tg_id=msg.from_user.id)
+    try:
+        if re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', msg.text):
+            print(msg.text)
+            async with connect_db() as session:
+                res = await update_admin(session, msg.from_user.id, email=msg.text)
+    except:
+        pass
+    try:
+        async with connect_db() as session:
+            resp = await get_admin(session, msg.from_user.id)
+            print(resp.email)
+            if resp is None:
+                await msg.message.answer("Вам запрещен вход в этот отдел", reply_markup=kb.menu)
+            if resp.email == 'asd':
+                await state.set_state(UserData.email)
+                await msg.message.answer("Введите свою почту для дальнейшего получения заявок от пользователей")
+            else:
+                try:
+                    await msg.message.answer("Выберите интересующий вас раздел", reply_markup=kb.admin_kb)
+                except:
+                    await msg.answer("Выберите интересующий вас раздел", reply_markup=kb.admin_kb)
+        if isinstance(resp, str):
+            raise resp
+    except Exception as e:
+        print(e)
+        pass
+
+
+@router.callback_query(F.data == "object_deals")
+async def object_deals(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.message.answer("Выберите интересующую вас подборку", reply_markup=kb.type_of_object_deals_kb)
+
+
+@router.callback_query(F.data == "get_object_deals")
+async def object_deals(callback_query: CallbackQuery, state: FSMContext):
+    async with connect_db() as session:
+        data = await state.get_data()
+        res = await get_all_selections_by_admin(session, data['tg_id'])
+        result_str=''
+        for row in res:
+            result_str+= f'Тип - {row["type_of"]}, Ссылка - {row["link"]}\n'
+    await callback_query.message.answer(f'Ваши подборки:\n{result_str}')
+    await callback_query.message.answer("Выберите интересующий вас раздел", reply_markup=kb.admin_kb)
+
+
+@router.callback_query(F.data.contains("type_of_object_deals"))
+async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
+    await state.update_data(type_of=callback_query.data.split(',')[1])
+    await state.set_state(UserData.deal_link)
+    await callback_query.message.answer("Введите ссылку на подборку:")
+
+
+@router.message(UserData.deal_link)
+async def add_deal_link(msg: Message, state: FSMContext):
+    await state.update_data(tg_id=msg.from_user.id)
+    admin_data = await state.get_data()
+    if admin_data['type_of'] == 'Акц':
+        admin_data['type_of'] = "Акции и траншевая ипотека"
+    data = {'type_of': admin_data['type_of'], 'admin_id': admin_data['tg_id'], 'link': msg.text}
+    try:
+        async with connect_db() as session:
+            res = await create_selection(session, data)
+    except:
+        await update_selection(session, admin_id=admin_data['tg_id'], type_of=admin_data['type_of'], link=msg.text)
+    await msg.answer("Выберите интересующий вас раздел", reply_markup=kb.admin_kb)
 
 
 @router.callback_query(F.data == "Request_a_consultation_by_phone")
@@ -131,13 +246,6 @@ async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
 async def sell_real_estate(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(UserData.NAME)
 
-    await state.update_data(name=callback_query.from_user.full_name)
-    await state.update_data(id=callback_query.from_user.id)
-    await state.update_data(url=callback_query.from_user.url)
-    try:
-        await state.update_data(username='@' + callback_query.from_user.username)
-    except:
-        await state.update_data(username='No username')
     await callback_query.message.delete()
     await callback_query.message.answer(
         "Вы хотите указать только тип объекта либо же получить дополнительно приблизительную стоимость вашего объекта?: ",
@@ -203,10 +311,18 @@ async def type_of_object_final(message: types.Message, state: FSMContext):
         await state.update_data(number_of_rooms=message.text)
     user_data = await state.get_data()
     await state.clear()
+    async with connect_db() as session:
+        print(user_data['id'])
+        user = await get_user(session, user_data['id'])
+        print(user.admin_id)
+        admin = await get_admin(session, user.admin_id)
+        print(admin.tg_id)
+        print(admin.email)
+    print(admin.email)
+    res = send_email(to_email=admin.email, subject='Пришла заявка на продажу', message=f'Данные пользователя: {user_data.items()}')
+    print(res)
     await message.answer(
-        f"В ближайшее время Вам будет направлена примерная стоимость вашей недвижимости\n"
-        f"Ваши данные: {user_data.items()}"
-        f"\nсделать пересылку данных юзера риелтору"
+        f"В ближайшее время Вам будет направлена примерная стоимость вашей недвижимости"
     )
 
 # @router.message()

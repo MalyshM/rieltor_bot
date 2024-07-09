@@ -1,82 +1,65 @@
-from models import connect_db_users, User, async_session_conn
+from typing import Optional
+
+from aiogram.types import Message
+from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
+
+from models import *
 
 
-async def add_user(id: int) -> bool | str:
-    async with async_session_conn() as db:
-        query = await db.execute(f"""
-            select
-                *
-            from users u
-            where 
-                u.id_tg ={id}
-        """)
-        check_user = query.first()
-        if check_user is not None:
-            await db.close()
-            return "Такой пользователь уже есть"
-        db.add(User(id_tg=id, balance=0.0))
-        await db.commit()
-        await db.close()
-    return True
+async def create_user(session: AsyncSession, data: dict) -> Users:
+    is_registered = await session.execute(select(Users).where(Users.tg_id == data['id']))
+    user = is_registered.scalar_one_or_none()
+    if user:
+        raise Exception("User is already registered")
+
+    user = Users()
+    user.tg_id = data['id']
+    user.name = data['name']
+    user.link = data['url']
+    user.username = data['username']
+    user.admin_id = 981942668
+    session.add(user)
+    await session.commit()
+    return user
 
 
-async def get_user(id: int):
-    async with async_session_conn() as db:
-        query = await db.execute(f"""
-            select
-                *
-            from users u
-            where 
-                u.id_tg ={id}
-        """)
-        check_user = query.first()
-        if check_user is None:
-            await db.close()
-            return "Такого пользователя нет"
-        await db.close()
-    return check_user
+async def get_user(session: AsyncSession, user_id: int) -> Optional[Users]:
+    try:
+        result = await session.execute(select(Users).where(Users.tg_id == user_id))
+        return result.scalar_one()
+    except NoResultFound:
+        return None
 
 
-async def update_user(id: int, balance_change: float) -> bool | str:
-    async with async_session_conn() as db:
-        query = await db.execute(f"""
-            select
-                *
-            from users u
-            where 
-                u.id_tg ={id}
-        """)
-        check_user = query.first()
-        if check_user is None:
-            await db.close()
-            return "Такого пользователя нет"
-        await db.execute(f"""
-        UPDATE users
-        SET balance = balance + {balance_change}
-        WHERE id_tg = {id}
-        """)
-        await db.commit()
-        await db.close()
-    return True
+async def get_all_users(session: AsyncSession) -> List[Users]:
+    result = await session.execute(select(Users))
+    return result.scalars().all()
 
 
-async def delete_user(id: int) -> bool | str:
-    async with async_session_conn() as db:
-        query = await db.execute(f"""
-            select
-                *
-            from users u
-            where 
-                u.id_tg ={id}
-        """)
-        check_user = query.first()
-        if check_user is None:
-            await db.close()
-            return "Такого пользователя нет"
-        await db.execute(f"""
-        DELETE FROM users
-        WHERE id_tg = {id};
-        """)
-        await db.commit()
-        await db.close()
-    return True
+async def update_user(session: AsyncSession, user_id: int, **kwargs) -> Optional[Users]:
+    try:
+        user = await get_user(session, user_id)
+        if user:
+            for key, value in kwargs.items():
+                setattr(user, key, value)
+            await session.commit()
+            return user
+        return None
+    except Exception as e:
+        print(e)
+        await session.rollback()
+        raise e
+
+
+async def delete_user(session: AsyncSession, user_id: int) -> bool:
+    try:
+        user = await get_user(session, user_id)
+        if user:
+            await session.delete(user)
+            await session.commit()
+            return True
+        return False
+    except Exception as e:
+        await session.rollback()
+        raise e
