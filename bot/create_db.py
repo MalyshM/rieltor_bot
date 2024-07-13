@@ -2,7 +2,7 @@ import psycopg2
 
 
 def db_create():
-    conn = psycopg2.connect(dbname="postgres", user="postgres", password="admin", host="localhost")
+    conn = psycopg2.connect(dbname="postgres", user="postgres", password="admin", host="db")
     cursor = conn.cursor()
 
     conn.autocommit = True
@@ -22,7 +22,7 @@ def db_create():
     cursor.close()
     conn.close()
     conn = psycopg2.connect(dbname="rieltor_bot", user="postgres", password="admin",
-                            host="localhost")
+                            host="db")
     cursor = conn.cursor()
     conn.autocommit = True
     sql1 = '''

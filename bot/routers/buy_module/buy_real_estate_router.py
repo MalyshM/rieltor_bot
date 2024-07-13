@@ -9,8 +9,12 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.fsm.state import State, StatesGroup
 
 import text
+from admin_crud import get_admin
+from models import connect_db
 from routers.buy_module.buy_real_estate_kb import type_of_object_kb, calculation_format_buy_kb, mortgage_buy_kb, \
     type_of_object_detail_kb, type_of_object_detail_suburban_kb
+from send_mail import send_email
+from user_funcs import get_user
 
 # from requests import add_user, check_resp
 
@@ -176,11 +180,14 @@ async def calculation_format_buy(callback_query: CallbackQuery, state: FSMContex
     user_data = await state.get_data()
     await state.clear()
     await callback_query.message.delete()
+    async with connect_db() as session:
+        user = await get_user(session, user_data['id'])
+        admin = await get_admin(session, user.admin_id)
+    res = send_email(to_email=admin.email, subject='Пришла заявка на покупку',
+                     message=f'Данные пользователя: {user_data.items()}')
     await callback_query.message.answer(
         f"В ближайшее время Вам будет направлена подборка\n"
         f"объектов недвижимости. Если у Вас возникнут вопросы\n"
         f"или потребуются изменения выбранных условий вы можете\n"
         f"обратиться в чат."
-        f"Ваши данные: {user_data.items()}"
-        f"\nсделать пересылку данных юзера риелтору"
     )

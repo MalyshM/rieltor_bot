@@ -9,8 +9,12 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.fsm.state import State, StatesGroup
 
 import text
+from admin_crud import get_admin
+from models import connect_db
 from routers.mortgage_module.mortgage_kb import mortgage_info, get_year_calendar, number_of_children_kb, is_2018_, \
     is_18_or_older
+from send_mail import send_email
+from user_funcs import get_user
 
 # from requests import add_user, check_resp
 
@@ -175,11 +179,15 @@ async def get_birth_date(message: types.Message, state: FSMContext):
 async def get_credit_amount(message: types.Message, state: FSMContext):
     await state.update_data(credit_amount=message.text)
     # await message.delete()
-    data = await state.get_data()
+    user_data = await state.get_data()
     await state.clear()
+    async with connect_db() as session:
+        user = await get_user(session, user_data['id'])
+        admin = await get_admin(session, user.admin_id)
+    res = send_email(to_email=admin.email, subject='Пришла заявка на ипотеку',
+                     message=f'Данные пользователя: {user_data.items()}')
     await message.answer(
         "В скором времени будет сформирована заявка в банк и в случае "
         "необходимости уточнения информация с Вами свяжется ипотечный "
-        "специалист." f'\n Ваши данные: {data}'
-        f"\nсделать пересылку данных юзера риелтору"
+        "специалист."
     )
