@@ -40,6 +40,7 @@ class UserData(StatesGroup):
     admin_id = State()
     email = State()
     deal_link = State()
+    phone_number = State()
 
 
 @router.message(Command("start"))
@@ -142,9 +143,9 @@ async def object_deals(callback_query: CallbackQuery, state: FSMContext):
     async with connect_db() as session:
         data = await state.get_data()
         res = await get_all_selections_by_admin(session, data['tg_id'])
-        result_str=''
+        result_str = ''
         for row in res:
-            result_str+= f'Тип - {row["type_of"]}, Ссылка - {row["link"]}\n'
+            result_str += f'Тип - {row["type_of"]}, Ссылка - {row["link"]}\n'
     await callback_query.message.answer(f'Ваши подборки:\n{result_str}')
     await callback_query.message.answer("Выберите интересующий вас раздел", reply_markup=kb.admin_kb)
 
@@ -172,9 +173,35 @@ async def add_deal_link(msg: Message, state: FSMContext):
 
 
 @router.callback_query(F.data == "Request_a_consultation_by_phone")
-async def menu(msg: Message):
-    await msg.message.delete()
-    await msg.message.answer("сделать пересылку данных юзера риелтору")
+@router.message(UserData.phone_number)
+async def menu(msg: Message, state: FSMContext):
+    # await msg.message.delete()
+    user_data = await state.get_data()
+    async with connect_db() as session:
+        user = await get_user(session, user_data['id'])
+        admin = await get_admin(session, user.admin_id)
+        print(user.phone_number)
+        try:
+            if re.match(r"\+\d{11}", msg.text):
+                await update_user(session, user.tg_id, phone_number=msg.text)
+        except Exception as e:
+            print(e)
+    if user.phone_number is None:
+        await state.set_state(UserData.phone_number)
+        try:
+            await msg.message.answer(
+                "Введите свой номер телефона для последующего звонка от риелтора(Пример: +71234567890)")
+        except:
+            await msg.answer(
+                "Введите свой номер телефона для последующего звонка от риелтора(Пример: +71234567890)")
+    else:
+        res = send_email(to_email=admin.email, subject='Пришла заявка на консультацию по телефону',
+                         message=f'Данные пользователя: {user_data.items()}, контактный телефон: '
+                                 f'{user.phone_number if user.phone_number is not None else msg.text}')
+        try:
+            await msg.message.answer("Ваш запрос передан риелтору")
+        except:
+            await msg.answer("Ваш запрос передан риелтору")
 
 
 class Question(StatesGroup):
@@ -184,8 +211,13 @@ class Question(StatesGroup):
 @router.message(Question.question)
 async def menu(msg: Message, state: FSMContext):
     # await msg.delete()
-    await msg.answer("сделать пересылку данных юзера и вопроса риелтору"
-                     f'\nВаш вопрос: {msg.text}')
+    user_data = await state.get_data()
+    async with connect_db() as session:
+        user = await get_user(session, user_data['id'])
+        admin = await get_admin(session, user.admin_id)
+    res = send_email(to_email=admin.email, subject='Пришел вопрос от пользователя',
+                     message=f'Данные пользователя: {user_data.items()}\nВопрос: {msg.text}')
+    await msg.answer("Ваш вопрос передан риелтору")
 
 
 @router.callback_query(F.data == "Ask_your_question")
@@ -319,7 +351,8 @@ async def type_of_object_final(message: types.Message, state: FSMContext):
         print(admin.tg_id)
         print(admin.email)
     print(admin.email)
-    res = send_email(to_email=admin.email, subject='Пришла заявка на продажу', message=f'Данные пользователя: {user_data.items()}')
+    res = send_email(to_email=admin.email, subject='Пришла заявка на продажу',
+                     message=f'Данные пользователя: {user_data.items()}')
     print(res)
     await message.answer(
         f"В ближайшее время Вам будет направлена примерная стоимость вашей недвижимости"

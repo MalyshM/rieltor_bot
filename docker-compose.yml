@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: mydatabase
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - '54322:54322'
+
+  bot:
+    build:
+      context: bot
+      dockerfile: ./bot.Dockerfile
+    container_name: bot_bot
+    command: bash -c "cd /bot; python main.py"
+    env_file:
+      - bot/.env
+    volumes:
+      - ./bot:/bot
+    environment:
+      - PYTHONPATH=/bot
+    depends_on:
+      - db
