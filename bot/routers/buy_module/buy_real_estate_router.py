@@ -8,8 +8,10 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 
 from aiogram.fsm.state import State, StatesGroup
 
+import kb
 import text
 from admin_crud import get_admin
+from key_dict import prettify_dict_str
 from models import connect_db
 from routers.buy_module.buy_real_estate_kb import type_of_object_kb, calculation_format_buy_kb, mortgage_buy_kb, \
     type_of_object_detail_kb, type_of_object_detail_suburban_kb
@@ -78,7 +80,7 @@ async def sell_real_estate_true(callback_query: CallbackQuery, state: FSMContext
         await state.update_data(type_of_object_buy_detail=callback_query.data.split(',')[1])
     await callback_query.message.delete()
     await state.set_state(BuyPattern.cost_range)
-    await callback_query.message.answer('Введите предполагаемую вилку стоимости.\nПример: 1000000-3000000')
+    await callback_query.message.answer('Введите предполагаемую вилку стоимости.\nПример: 1 000 000-3 000 000', reply_markup=kb.exit_to_menu_kb)
 
 
 @buy_real_estate_router.callback_query(F.data.contains("type_of_object_detail_buy"))
@@ -109,13 +111,13 @@ async def get_birth_date(message: types.Message, state: FSMContext):
         print(user_data.values())
         if 'Загородная' in user_data.values() or 'Земельный участок' in user_data.values():
             await state.set_state(BuyPattern.land_square)
-            await message.answer("Введите вилку площади желаемого участка в квадратных метрах. Пример:\n1000-2000")
+            await message.answer("Введите вилку площади желаемого участка в квадратных метрах.\nПример: 1 000-2 000", reply_markup=kb.exit_to_menu_kb)
         else:
             await state.set_state(BuyPattern.square)
-            await message.answer("Введите вилку площади желаемого объекта в квадратных метрах. Пример:\n1000-2000")
+            await message.answer("Введите вилку площади желаемого объекта в квадратных метрах.\nПример: 1 000-2 000", reply_markup=kb.exit_to_menu_kb)
     else:
         await state.set_state(BuyPattern.number_of_rooms)
-        await message.answer("Введите количество комнат. Пример:\n5")
+        await message.answer("Введите количество комнат.\nПример: 5", reply_markup=kb.exit_to_menu_kb)
 
     # await message.delete()
 
@@ -126,10 +128,10 @@ async def get_birth_date(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
     if 'Земельный участок' in user_data.values():
         await state.set_state(BuyPattern.location)
-        await message.answer("Введите желаемый район/тракт/населенный пункт. Пример:\nТюмень район Обороны")
+        await message.answer("Введите желаемый район/тракт/населенный пункт.\nПример: Тюмень район Обороны", reply_markup=kb.exit_to_menu_kb)
     else:
         await state.set_state(BuyPattern.number_of_rooms)
-        await message.answer("Введите количество комнат. Пример:\n5")
+        await message.answer("Введите количество комнат.\nПример: 5", reply_markup=kb.exit_to_menu_kb)
 
 
 @buy_real_estate_router.message(BuyPattern.number_of_rooms)
@@ -138,16 +140,16 @@ async def get_birth_date(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
     await state.set_state(BuyPattern.square)
     if 'type_of_object_buy_detail' in user_data.keys():
-        await message.answer("Введите площадь дома. Пример:\n200")
+        await message.answer("Введите площадь дома.\nПример: 200", reply_markup=kb.exit_to_menu_kb)
     else:
-        await message.answer("Введите площадь квартиры. Пример:\n50")
+        await message.answer("Введите площадь квартиры.\nПример: 50", reply_markup=kb.exit_to_menu_kb)
 
 
 @buy_real_estate_router.message(BuyPattern.square)
 async def get_birth_date(message: types.Message, state: FSMContext):
     await state.update_data(square=message.text)
     await state.set_state(BuyPattern.location)
-    await message.answer("Введите желаемый район/тракт/населенный пункт. Пример:\nТюмень район Обороны")
+    await message.answer("Введите желаемый район/тракт/населенный пункт.\nПример: Тюмень район Обороны", reply_markup=kb.exit_to_menu_kb)
 
 
 @buy_real_estate_router.message(BuyPattern.location)
@@ -184,10 +186,11 @@ async def calculation_format_buy(callback_query: CallbackQuery, state: FSMContex
         user = await get_user(session, user_data['id'])
         admin = await get_admin(session, user.admin_id)
     res = send_email(to_email=admin.email, subject='Пришла заявка на покупку',
-                     message=f'Данные пользователя: {user_data.items()}')
+                     message=f'Данные пользователя: {prettify_dict_str(user_data)}')
     await callback_query.message.answer(
         f"В ближайшее время Вам будет направлена подборка\n"
         f"объектов недвижимости. Если у Вас возникнут вопросы\n"
         f"или потребуются изменения выбранных условий вы можете\n"
         f"обратиться в чат."
     )
+    await callback_query.message.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)

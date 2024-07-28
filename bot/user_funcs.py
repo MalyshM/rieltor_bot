@@ -18,7 +18,11 @@ async def create_user(session: AsyncSession, data: dict) -> Users:
     user.name = data['name']
     user.link = data['url']
     user.username = data['username']
-    user.admin_id = 981942668
+    try:
+        user.admin_id = data['admin_id']
+    except:
+        user.admin_id = 981942668
+
     session.add(user)
     await session.commit()
     return user
