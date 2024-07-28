@@ -4,22 +4,28 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 mortgage_info = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Получить информацию по ипотечным программам", callback_data="years")],
     [InlineKeyboardButton(text="Подать заявку на ипотеку", callback_data="make_mortgage")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
 number_of_children_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="2 и более", callback_data="18_or_older,2 и более")],
     [InlineKeyboardButton(text="1 ребенок", callback_data="is_2018_+,1 ребенок")],
     [InlineKeyboardButton(text="Нет", callback_data="make_mortgage,0,1,1,1,1")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
 
 is_2018_ = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Да", callback_data="make_mortgage,0,1,1,1,1")],
     [InlineKeyboardButton(text="Нет", callback_data="make_mortgage,1,1,0,0,1")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
 
 is_18_or_older = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Да", callback_data="make_mortgage,0,1,1,1,1")],
     [InlineKeyboardButton(text="Нет", callback_data="make_mortgage,1,1,0,0,1")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
+
+
 async def get_year_calendar(offset: int = 0) -> InlineKeyboardMarkup:
     start_year = 20 + offset
     builder = InlineKeyboardBuilder()
@@ -42,18 +48,22 @@ type_of_object_detail_kb = InlineKeyboardMarkup(inline_keyboard=[
      InlineKeyboardButton(text="Производственное", callback_data="comm,Производственное")],
     [InlineKeyboardButton(text="Офисное", callback_data="comm,Офисное"),
      InlineKeyboardButton(text="Свой вариант", callback_data="comm,Свой вариант")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
 type_of_object_detail_suburban_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Готовый дом", callback_data="suburban,Готовый дом"),
      InlineKeyboardButton(text="Подряд на стройку", callback_data="suburban,Подряд на стройку")],
     [InlineKeyboardButton(text="Земельный участок", callback_data="suburban,Земельный участок")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
 calculation_format_buy_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Ипотека", callback_data="mortgage,Ипотека"),
      InlineKeyboardButton(text="Собственные средства", callback_data="calculation_format_buy_kb,Собственныесредства")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
-# todo добавить переход в раздел ипотеки
+
 mortgage_buy_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Уже имеется одобрение", callback_data="calculation_format_buy_kb,True"),
      InlineKeyboardButton(text="Ипотека требует одобрения", callback_data="asd")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])

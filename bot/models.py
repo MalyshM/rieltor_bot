@@ -72,6 +72,18 @@ class Selection(Base):
 
 
 class Users(Base):
+
+    def __str__(self):
+        attrs = vars(self)
+        result_str = ''
+        for key, item in attrs.items():
+            if key != '_sa_instance_state':
+                result_str += f"{key} - {item},\n"
+        return result_str
+
+    def __repr__(self):
+        return self.__str__()
+
     __tablename__ = 'users'
     __table_args__ = (
         ForeignKeyConstraint(['admin_id'], ['admins.tg_id'], ondelete='CASCADE', name='users_admin_id_fkey'),
@@ -97,9 +109,11 @@ class Users(Base):
     admin: Mapped['Admins'] = relationship('Admins', back_populates='users')
     buy_request: Mapped[List['BuyRequest']] = relationship('BuyRequest', uselist=True, back_populates='user')
     sell_request: Mapped[List['SellRequest']] = relationship('SellRequest', uselist=True, back_populates='user')
-    users_conlultation: Mapped[List['UsersConlultation']] = relationship('UsersConlultation', uselist=True, back_populates='user')
+    users_conlultation: Mapped[List['UsersConlultation']] = relationship('UsersConlultation', uselist=True,
+                                                                         back_populates='user')
     users_mortgage: Mapped[List['UsersMortgage']] = relationship('UsersMortgage', uselist=True, back_populates='user')
-    users_questions: Mapped[List['UsersQuestions']] = relationship('UsersQuestions', uselist=True, back_populates='user')
+    users_questions: Mapped[List['UsersQuestions']] = relationship('UsersQuestions', uselist=True,
+                                                                   back_populates='user')
 
 
 class BuyRequest(Base):

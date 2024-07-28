@@ -3,14 +3,15 @@ import re
 
 import aiohttp
 from aiogram import F, Router, types
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, FSInputFile
 import kb
 import text
 from aiogram.fsm.state import State, StatesGroup
 
-from admin_crud import get_admin, update_admin
+from admin_crud import get_admin, update_admin, get_admin_users
+from key_dict import prettify_dict_str
 from models import connect_db
 from selection_crud import create_selection, update_selection, get_all_selections, get_all_selections_by_admin
 from send_mail import send_email
@@ -43,15 +44,34 @@ class UserData(StatesGroup):
     phone_number = State()
 
 
-@router.message(Command("start"))
-async def start_handler(msg: Message):
+@router.message(Command('start'))
+async def start_handler(msg: Message, command: CommandObject):
+    args = command.args
+    print(args)
+    if args:
+        try:
+            data = {'name': msg.from_user.full_name, 'id': msg.from_user.id, 'url': msg.from_user.url}
+            try:
+                data['username'] = '@' + msg.from_user.username
+            except:
+                data['username'] = 'No username'
+            data['admin_id'] = int(args)
+            async with connect_db() as session:
+                resp = await create_user(session, data)
+            if isinstance(resp, str):
+                raise resp
+        except Exception as e:
+            print(e)
+            pass
     await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.type_of_user_kb)
 
 
 @router.message(Command("menu"))
 @router.callback_query(F.data == "menu")
+@router.callback_query(F.data == "back_to_menu")
 @router.message(UserData.admin_id)
 async def menu(msg: Message, state: FSMContext):
+    await state.clear()
     try:
         if isinstance(int(msg.text), int):
             print(msg.text)
@@ -100,6 +120,24 @@ async def menu(msg: Message, state: FSMContext):
                 await msg.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
 
 
+@router.callback_query(F.data == "another_rieltor_code")
+@router.message(UserData.admin_id)
+async def another_rieltor_code(message: Message, state: FSMContext):
+    try:
+        print(isinstance(int(message.text), int))
+        if isinstance(int(message.text), int):
+            print(message.text)
+            async with connect_db() as session:
+                res = await update_user(session, message.from_user.id, admin_id=int(message.text))
+                print(res.tg_id)
+                print(res.admin_id)
+    except:
+        pass
+    await state.set_state(UserData.admin_id)
+    # await message.delete()
+    await message.message.answer("Введите Ваш новый код риелтора:", reply_markup=kb.exit_to_menu_kb)
+
+
 @router.message(Command("admin"))
 @router.callback_query(F.data == "admin")
 @router.message(UserData.email)
@@ -115,7 +153,7 @@ async def admin(msg: Message, state: FSMContext):
     try:
         async with connect_db() as session:
             resp = await get_admin(session, msg.from_user.id)
-            print(resp.email)
+            # print(resp.email)
             if resp is None:
                 await msg.message.answer("Вам запрещен вход в этот отдел", reply_markup=kb.menu)
             if resp.email == 'asd':
@@ -131,6 +169,15 @@ async def admin(msg: Message, state: FSMContext):
     except Exception as e:
         print(e)
         pass
+
+
+@router.callback_query(F.data == "get_admin_users")
+async def get_admin_users_route(callback_query: CallbackQuery, state: FSMContext):
+    admin_data = await state.get_data()
+    async with connect_db() as session:
+        resp = await get_admin_users(session, admin_data['tg_id'])
+        print(resp)
+    await callback_query.message.answer(f"Пользователи, подписанные на вас: {resp}")
 
 
 @router.callback_query(F.data == "object_deals")
@@ -182,26 +229,31 @@ async def menu(msg: Message, state: FSMContext):
         admin = await get_admin(session, user.admin_id)
         print(user.phone_number)
         try:
-            if re.match(r"\+\d{11}", msg.text):
+            if re.match(r"\+\d{11}", msg.text) or re.match(r"\d{11}", msg.text):
                 await update_user(session, user.tg_id, phone_number=msg.text)
+                user = await get_user(session, user_data['id'])
         except Exception as e:
             print(e)
     if user.phone_number is None:
         await state.set_state(UserData.phone_number)
         try:
             await msg.message.answer(
-                "Введите свой номер телефона для последующего звонка от риелтора(Пример: +71234567890)")
+                "Введите свой номер телефона для последующего звонка от риелтора(Пример: +71234567890)",
+                reply_markup=kb.exit_to_menu_kb)
         except:
             await msg.answer(
-                "Введите свой номер телефона для последующего звонка от риелтора(Пример: +71234567890)")
+                "Введите свой номер телефона для последующего звонка от риелтора(Пример: +71234567890)",
+                reply_markup=kb.exit_to_menu_kb)
     else:
         res = send_email(to_email=admin.email, subject='Пришла заявка на консультацию по телефону',
-                         message=f'Данные пользователя: {user_data.items()}, контактный телефон: '
+                         message=f'Данные пользователя: {prettify_dict_str(user_data)},\nКонтактный телефон - '
                                  f'{user.phone_number if user.phone_number is not None else msg.text}')
         try:
             await msg.message.answer("Ваш запрос передан риелтору")
+            await msg.message.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
         except:
             await msg.answer("Ваш запрос передан риелтору")
+            await msg.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
 
 
 class Question(StatesGroup):
@@ -216,15 +268,16 @@ async def menu(msg: Message, state: FSMContext):
         user = await get_user(session, user_data['id'])
         admin = await get_admin(session, user.admin_id)
     res = send_email(to_email=admin.email, subject='Пришел вопрос от пользователя',
-                     message=f'Данные пользователя: {user_data.items()}\nВопрос: {msg.text}')
+                     message=f'Данные пользователя: {prettify_dict_str(user_data)},\nВопрос - {msg.text}')
     await msg.answer("Ваш вопрос передан риелтору")
+    await msg.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
 
 
 @router.callback_query(F.data == "Ask_your_question")
 async def menu(msg: Message, state: FSMContext):
     await msg.message.delete()
     await state.set_state(Question.question)
-    await msg.message.answer("Введите свой вопрос:")
+    await msg.message.answer("Введите свой вопрос:", reply_markup=kb.exit_to_menu_kb)
 
 
 @router.callback_query(F.data == "deals_of_the_week")
@@ -243,11 +296,11 @@ async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
     if data[1] == '1':
         await callback_query.message.answer(
             f"*высылать ссылку на подборку*: "
-        )
+            , reply_markup=kb.exit_to_menu_kb)
     elif data[1] == '2':
         await callback_query.message.answer(
             f"*высылать ссылку на подборку*: "
-        )
+            , reply_markup=kb.exit_to_menu_kb)
     else:
         await callback_query.message.answer(
             f"Выберите интересующую вас категорию: ",
@@ -262,15 +315,15 @@ async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
     if data[1] == '1':
         await callback_query.message.answer(
             f"*высылать ссылку на подборку*: "
-        )
+            , reply_markup=kb.exit_to_menu_kb)
     elif data[1] == '2':
         await callback_query.message.answer(
             f"*высылать ссылку на подборку*: "
-        )
+            , reply_markup=kb.exit_to_menu_kb)
     else:
         await callback_query.message.answer(
             f"*высылать ссылку на подборку*: "
-        )
+            , reply_markup=kb.exit_to_menu_kb)
 
 
 # default way of displaying a selector to user - date set for today
@@ -280,7 +333,7 @@ async def sell_real_estate(callback_query: CallbackQuery, state: FSMContext):
 
     await callback_query.message.delete()
     await callback_query.message.answer(
-        "Вы хотите указать только тип объекта либо же получить дополнительно приблизительную стоимость вашего объекта?: ",
+        "Вы хотите указать только тип объекта либо же дополнительно рассчитать его стоимость?",
         reply_markup=kb.sell_real_estate
     )
 
@@ -313,7 +366,8 @@ async def type_of_object(callback_query: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     print(user_data)
     await state.set_state(SellPattern.ADDRESS)
-    await callback_query.message.answer('Введите адрес объекта. Пример:\nг. Москва ул. Автомоторная д 5 кв 13')
+    await callback_query.message.answer('Введите адрес объекта.\nПример: г. Москва ул. Автомоторная д 5 кв 13',
+                                        reply_markup=kb.exit_to_menu_kb)
 
 
 @router.message(SellPattern.ADDRESS)
@@ -325,7 +379,8 @@ async def get_birth_date(message: types.Message, state: FSMContext):
     else:
         await state.set_state(SellPattern.SQUARE)
         # await message.delete()
-        await message.answer("Введите площадь объекта в квадратных метрах. Пример:\n50")
+        await message.answer("Введите площадь объекта в квадратных метрах.\nПример: 50",
+                             reply_markup=kb.exit_to_menu_kb)
 
 
 @router.message(SellPattern.SQUARE)
@@ -333,7 +388,7 @@ async def get_birth_date(message: types.Message, state: FSMContext):
     await state.update_data(square=message.text)
     await state.set_state(SellPattern.NUMBER_OF_ROOMS)
     # await message.delete()
-    await message.answer("Введите количество комнат. Пример:\n3")
+    await message.answer("Введите количество комнат.\nПример: 3", reply_markup=kb.exit_to_menu_kb)
 
 
 @router.message(SellPattern.NUMBER_OF_ROOMS)
@@ -352,11 +407,12 @@ async def type_of_object_final(message: types.Message, state: FSMContext):
         print(admin.email)
     print(admin.email)
     res = send_email(to_email=admin.email, subject='Пришла заявка на продажу',
-                     message=f'Данные пользователя: {user_data.items()}')
+                     message=f'Данные пользователя: {prettify_dict_str(user_data)}')
     print(res)
     await message.answer(
         f"В ближайшее время Вам будет направлена примерная стоимость вашей недвижимости"
     )
+    await message.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
 
 # @router.message()
 # async def unhandled_message(message: types.Message):

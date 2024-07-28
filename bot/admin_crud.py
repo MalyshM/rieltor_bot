@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Optional
 
 from aiogram.types import Message
@@ -29,6 +30,18 @@ async def get_admin(session: AsyncSession, admin_id: int) -> Optional[Admins]:
     try:
         result = await session.execute(select(Admins).where(Admins.tg_id == admin_id))
         return result.scalar_one()
+    except NoResultFound:
+        return None
+
+
+async def get_admin_users(session: AsyncSession, admin_id: int) -> Optional[str]:
+    try:
+        result = await session.execute(select(Users).where(Users.admin_id == admin_id))
+        result = result.scalars().all()
+        result_str = ''
+        for index, user in enumerate(result):
+            result_str = f'{index + 1} user:\n {user.__str__()}'
+        return result_str
     except NoResultFound:
         return None
 
