@@ -2,7 +2,8 @@ import psycopg2
 
 
 def db_create():
-    conn = psycopg2.connect(dbname="postgres", user="postgres", password="admin", host="db")
+    conn = psycopg2.connect(
+        dbname="postgres", user="postgres", password="admin", host="db")
     cursor = conn.cursor()
 
     conn.autocommit = True

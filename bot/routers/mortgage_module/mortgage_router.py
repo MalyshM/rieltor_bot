@@ -40,8 +40,8 @@ async def mortgage_init(callback_query: CallbackQuery, state: FSMContext):
     await state.update_data(id=callback_query.from_user.id)
     await state.update_data(url=callback_query.from_user.url)
     try:
-        await state.update_data(username='@' + callback_query.from_user.username)
-    except:
+        await state.update_data(username='@' + str(callback_query.from_user.username))
+    except Exception:
         await state.update_data(username='No username')
 
     await callback_query.message.delete()
@@ -132,8 +132,10 @@ async def sell_real_estate_true(callback_query: CallbackQuery, state: FSMContext
                 mortgage_str += 'Вам подходят такие ипотеки, как:\n'
             mortgage_str += f"{key_dict[key]},\n"
     await state.set_state(MortgageApplication.full_name)
-
-    await callback_query.message.answer(f"{mortgage_str}")
+    try:
+        await callback_query.message.answer(f"{mortgage_str}")
+    except Exception:
+        pass
     await callback_query.message.answer("Введите Ваше ФИО:", reply_markup=kb.exit_to_menu_kb)
 
 
