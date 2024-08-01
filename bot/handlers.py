@@ -50,7 +50,8 @@ async def start_handler(msg: Message, command: CommandObject):
     print(args)
     if args:
         try:
-            data = {'name': msg.from_user.full_name, 'id': msg.from_user.id, 'url': msg.from_user.url}
+            data = {'name': msg.from_user.full_name,
+                    'id': msg.from_user.id, 'url': msg.from_user.url}
             try:
                 data['username'] = '@' + msg.from_user.username
             except:
@@ -82,7 +83,8 @@ async def menu(msg: Message, state: FSMContext):
     except:
         pass
     try:
-        data = {'name': msg.from_user.full_name, 'id': msg.from_user.id, 'url': msg.from_user.url}
+        data = {'name': msg.from_user.full_name,
+                'id': msg.from_user.id, 'url': msg.from_user.url}
         try:
             data['username'] = '@' + msg.from_user.username
         except:
@@ -210,7 +212,8 @@ async def add_deal_link(msg: Message, state: FSMContext):
     admin_data = await state.get_data()
     if admin_data['type_of'] == 'Акц':
         admin_data['type_of'] = "Акции и траншевая ипотека"
-    data = {'type_of': admin_data['type_of'], 'admin_id': admin_data['tg_id'], 'link': msg.text}
+    data = {'type_of': admin_data['type_of'],
+            'admin_id': admin_data['tg_id'], 'link': msg.text}
     try:
         async with connect_db() as session:
             res = await create_selection(session, data)
@@ -295,12 +298,10 @@ async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
     data = callback_query.data.split(',')
     if data[1] == '1':
         await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: "
-            , reply_markup=kb.exit_to_menu_kb)
+            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
     elif data[1] == '2':
         await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: "
-            , reply_markup=kb.exit_to_menu_kb)
+            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
     else:
         await callback_query.message.answer(
             f"Выберите интересующую вас категорию: ",
@@ -314,16 +315,13 @@ async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
     data = callback_query.data.split(',')
     if data[1] == '1':
         await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: "
-            , reply_markup=kb.exit_to_menu_kb)
+            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
     elif data[1] == '2':
         await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: "
-            , reply_markup=kb.exit_to_menu_kb)
+            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
     else:
         await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: "
-            , reply_markup=kb.exit_to_menu_kb)
+            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
 
 
 # default way of displaying a selector to user - date set for today

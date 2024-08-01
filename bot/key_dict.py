@@ -18,5 +18,8 @@ key_dict = {'name': 'Имя в тг', 'id': 'Айди в тг', 'url': 'Ссыл
 def prettify_dict_str(data: dict):
     result_str = '\n'
     for key, item in data.items():
-        result_str += f'{key_dict[key]} - {item},\n'
+        try:
+            result_str += f'{key_dict[key]} - {item},\n'
+        except Exception:
+            pass
     return result_str[:-2]
