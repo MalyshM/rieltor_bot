@@ -80,6 +80,7 @@ Get_the_best_deals_of_the_week_kb_1 = InlineKeyboardMarkup(inline_keyboard=[
         text="Вторичка", callback_data="best_deals_of_the_week,Вторичка")],
     [InlineKeyboardButton(text="Новостройка",
                           callback_data="best_deals_of_the_week,Новостройка")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
 
 Get_the_best_deals_of_the_week_kb_2 = InlineKeyboardMarkup(inline_keyboard=[
@@ -89,4 +90,5 @@ Get_the_best_deals_of_the_week_kb_2 = InlineKeyboardMarkup(inline_keyboard=[
         text="Самые дешевые", callback_data="best_new_building_deals_of_the_week,Самые дешевые")],
     [InlineKeyboardButton(text="Акции и траншевая ипотека",
                           callback_data="best_new_building_deals_of_the_week,Акц")],
+    [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])

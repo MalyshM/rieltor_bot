@@ -13,7 +13,7 @@ from aiogram.fsm.state import State, StatesGroup
 from admin_crud import get_admin, update_admin, get_admin_users
 from key_dict import prettify_dict_str
 from models import connect_db
-from selection_crud import create_selection, update_selection, get_all_selections, get_all_selections_by_admin
+from selection_crud import create_selection, get_selection, update_selection, get_all_selections, get_all_selections_by_admin
 from send_mail import send_email
 from user_funcs import create_user, get_user, update_user
 
@@ -296,12 +296,13 @@ async def deals_of_the_week(msg: Message, state: FSMContext):
 async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.message.delete()
     data = callback_query.data.split(',')
-    if data[1] == '1':
-        await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
-    elif data[1] == '2':
-        await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
+    if data[1] != 'Новостройка':
+        async with connect_db() as session:
+            user_data = await state.get_data()
+            user = await get_user(session, user_data['id'])
+            res = await get_selection(session, user.admin_id, data[1])
+            await callback_query.message.answer(
+                f"{res.link if not isinstance(res,str) else res}", reply_markup=kb.exit_to_menu_kb)
     else:
         await callback_query.message.answer(
             f"Выберите интересующую вас категорию: ",
@@ -313,15 +314,12 @@ async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
 async def deals_of_the_week(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.message.delete()
     data = callback_query.data.split(',')
-    if data[1] == '1':
+    async with connect_db() as session:
+        user_data = await state.get_data()
+        user = await get_user(session, user_data['id'])
+        res = await get_selection(session, user.admin_id, data[1])
         await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
-    elif data[1] == '2':
-        await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
-    else:
-        await callback_query.message.answer(
-            f"*высылать ссылку на подборку*: ", reply_markup=kb.exit_to_menu_kb)
+            f"{res.link if not isinstance(res,str) else res}", reply_markup=kb.exit_to_menu_kb)
 
 
 # default way of displaying a selector to user - date set for today

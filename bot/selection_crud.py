@@ -23,13 +23,13 @@ async def create_selection(session: AsyncSession, data: dict) -> Selection:
     return selection
 
 
-async def get_selection(session: AsyncSession, admin_id: int, type_of: str) -> Optional[Selection]:
+async def get_selection(session: AsyncSession, admin_id: int, type_of: str) -> Selection | str:
     try:
         result = await session.execute(
             select(Selection).where(Selection.admin_id == admin_id, Selection.type_of == type_of))
         return result.scalar_one()
     except NoResultFound:
-        return None
+        return "У данного риелтора нет ссылки для этой категории"
 
 
 async def get_all_selections(session: AsyncSession) -> List[Selection]:
