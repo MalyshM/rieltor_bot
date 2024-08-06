@@ -59,12 +59,18 @@ async def start_handler(msg: Message, command: CommandObject):
             data['admin_id'] = int(args)
             async with connect_db() as session:
                 resp = await create_user(session, data)
+            print(resp)
             if isinstance(resp, str):
                 raise resp
+            try:
+                await msg.message.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
+            except:
+                await msg.answer("Выберите интересующий вас раздел", reply_markup=kb.menu)
         except Exception as e:
             print(e)
             pass
-    await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.type_of_user_kb)
+    else:
+        await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.type_of_user_kb)
 
 
 @router.message(Command("menu"))

@@ -17,10 +17,12 @@ menu = [
                           callback_data="Ask_your_question")],
     [InlineKeyboardButton(
         text="Получить лучшие предложения за неделю", callback_data="deals_of_the_week")],
-    [InlineKeyboardButton(text="Ввести код другого риелтора",
-                          callback_data="another_rieltor_code")],
-    [InlineKeyboardButton(text="Заполнить свои данные для дальнейшей авто-подстановки",
-                          callback_data="fill_user_data")],
+    # todo раскомментировать это когда скажут
+    # [InlineKeyboardButton(text="Ввести код другого риелтора",
+    #                       callback_data="another_rieltor_code")],
+    # todo раскомментировать это когда скажут
+    # [InlineKeyboardButton(text="Заполнить свои данные для дальнейшей авто-подстановки",
+    #                       callback_data="fill_user_data")],
 ]
 
 admin_kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -60,7 +62,7 @@ sell_real_estate = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Назад в меню", callback_data="back_to_menu")],
 ])
 type_of_user_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Пользователь", callback_data="menu")],
+    [InlineKeyboardButton(text="Клиент", callback_data="menu")],
     [InlineKeyboardButton(text="Риелтор", callback_data="admin")]
 ])
 type_of_object = InlineKeyboardMarkup(inline_keyboard=[
